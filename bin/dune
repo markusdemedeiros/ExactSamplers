@@ -1,0 +1,4 @@
+(executable
+ (public_name ExactSamplers)
+ (name main)
+ (libraries ExactSamplers))

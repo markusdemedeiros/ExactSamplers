@@ -1,4 +1,4 @@
 (executable
  (public_name ExactSamplers)
  (name main)
- (libraries ExactSamplers zarith CReal))
+ (libraries ExactSamplers zarith))

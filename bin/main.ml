@@ -28,7 +28,6 @@ let rec sample_prec (c : sample_cache ref) (p : int) : unit =
       then ()
       else begin sample_bit c; sample_prec c p end ;;
 
-
 let unif (s : unit -> bool) : unit -> CReal.t
   = fun _ ->
         let c = ref { value = (Z.of_int 0); bits = 0; bit_sampler = s } in
@@ -42,6 +41,30 @@ let urand_unif : unit -> CReal.t
   = fun _ -> let u = mk_urand_bit_sampler () in unif u () ;;
 
 
-let () =
+(*  let () =
     let c = urand_unif () in
+    Printf.printf "%s,\n" (CReal.to_string c 30) ;; *)
+
+
+(* Von Neumann's method for computing the exponential distribution *)
+
+
+let rec sample_run (i : int) (ui : CReal.t) : int
+ = let ui1 = urand_unif () in
+   if (CReal.compare ui ui1 == 1)
+      then i
+      else sample_run (i + 1) (ui1) ;;
+
+let vn =
+  let rec vn_rec (l : int) : CReal.t
+    = let x = urand_unif () in
+      let n = sample_run 0 x in
+      if (n mod 2 == 0)
+        then vn_rec (l + 1)
+        else (CReal.add x (CReal.of_int l))
+  in fun _ -> vn_rec 0 ;;
+
+
+let () =
+    let c = vn () in
     Printf.printf "%s,\n" (CReal.to_string c 30) ;;

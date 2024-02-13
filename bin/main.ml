@@ -53,8 +53,8 @@ let eager_cache s ix width
 (* A bit width whose values can fit inside a single ocaml int *)
 let eager_cache_size =
   if Sys.int_size < 32
-     then 4 (* 2 ** 4 = 16 <= 31 *)
-     else 5 (* 2 ** 5 = 32 <= 63 *) ;;
+     then 8 (* 2 * 8 = 16 <= 31 *)
+     else 16 (* 2 * 16 = 32 <= 63 *) ;;
 
 let default_eager_cache s ix = eager_cache s ix eager_cache_size ;;
 

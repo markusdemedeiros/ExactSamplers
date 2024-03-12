@@ -53,8 +53,8 @@ let eager_cache s ix width
 (* A bit width whose values can fit inside a single ocaml int *)
 let eager_cache_size =
   if Sys.int_size < 32
-     then 8 (* 2 * 8 = 16 <= 31 *)
-     else 16 (* 2 * 16 = 32 <= 63 *) ;;
+     then 4 (* 2 * 8 = 16 <= 31 *)
+     else 5 (* 2 * 16 = 32 <= 63 *) ;;
 
 let default_eager_cache s ix = eager_cache s ix eager_cache_size ;;
 
@@ -207,10 +207,43 @@ let sample_laplace (lambda : CReal.t) =
       then y
       else CReal.neg y ;;
 
+(** Rejection samplers on the unit interval *)
+
+let rec urand_rejection_sampler (maxv : CReal.t) (pdf : CReal.t -> CReal.t) =
+  fun _ ->
+    let sample = urand_unif () in
+    let value  = CReal.mul maxv (urand_unif ()) in
+    if CReal.compare (pdf sample) value == -1
+      then urand_rejection_sampler maxv pdf ()
+      else sample ;;
+
+let quad_pdf (x : CReal.t) = CReal.mul (CReal.of_int 3) (CReal.mul x x) ;;
 
 
+
+let () =
+    let c = urand_rejection_sampler (CReal.of_int 3) quad_pdf () in
+    let _ = (CReal.to_string c 10) in
+    Printf.printf "%s,\n" (CReal.to_string c 10) ;; 
+    (*  *Printf.printf "%s" (show_stats ()) ;; *)
+
+
+
+(*
 let () =
     let c = sample_gaussian () in
     let _ = (CReal.to_string c 10) in
     (*  *Printf.printf "%s,\n" (CReal.to_string c 10) ;; *)
     Printf.printf "%s" (show_stats ()) ;;
+*)
+
+(*
+let rec profiler n =
+  if n == 0
+    then ()
+    else let _ = (CReal.to_string (sample_gaussian ()) 10) in
+         profiler (n - 1) ;;
+
+profiler 10000 ;;
+*)
+

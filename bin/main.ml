@@ -9,13 +9,16 @@ let rec pow x n
 let urand_bit_sampler : unit -> bool
   = (fun _ -> Random.int 2 = 0) ;;
 
-(** Discrete uniform sampler from [0.. b-1] *)
-let mk_urand_nat_sampler : int -> (unit -> int)
-  = fun b -> (Random.self_init (); (fun _ -> Random.int b));;
+(** Discrete uniform sampler from [0..b-1] *)
+let urand_nat_sampler : int -> (unit -> int)
+  = fun b -> fun _ -> Random.int b;;
 
-let urand_nat = fun b -> mk_urand_nat_sampler b () ;;
+(** Random natural number from [0..b-1]*)
+let urand_nat = fun b -> urand_nat_sampler b () ;;
 
-(** Additional tracking for *)
+
+
+(** Debug information *)
 
 let global_bit_stats = ref (Array.make 0 0) ;;
 
@@ -27,6 +30,9 @@ let alloc_urand_stat : unit -> int
 
 let show_stats : unit -> string
   = fun _ -> Array.fold_left (fun s -> fun i -> Printf.sprintf "%s%d\n" s i) "" (!global_bit_stats)
+
+
+
 
 (** Lazily sampled uniform reals *)
 
@@ -41,7 +47,7 @@ type sample_cache = {
 let default_cache s ix
   = { value = (Z.of_int 0); bits = 0; bit_sampler = s; global_stats_index = ix } ;;
 
-(*  Tests for the gaussian distributioan show that almost all sampled bits use precision < 8, *)
+(*  Tests for the gaussian distribution show that almost all sampled bits use precision < 8, *)
 (*  so we might eliminate resamplings by starting out with more bits. This adds approximations, *)
 (*  but does not impact the other operations. From the zarith implementation[1] big ints *)
 (*  are represented as ocaml ints when small enough *)
@@ -58,6 +64,7 @@ let eager_cache_size =
 
 let default_eager_cache s ix = eager_cache s ix eager_cache_size ;;
 
+(** Update a sample_cache with two additional bits *)
 let sample_bit (c : sample_cache ref) : unit =
     begin
       !c.bits <- (!c.bits + 1) ;
@@ -70,7 +77,7 @@ let sample_bit (c : sample_cache ref) : unit =
       (!global_bit_stats).(!c.global_stats_index) <- (!c.bits) ;
     end ;;
 
-(* Update a sample_cache to contain at least p bits *)
+(** Update a sample_cache to contain at least p bits *)
 let rec sample_prec (c : sample_cache ref) (p : int) : unit =
     if p <= (!c.bits)
       then ()
@@ -88,6 +95,8 @@ let unif (s : unit -> bool) : unit -> CReal.t
 
 let urand_unif : unit -> CReal.t
   = fun _ -> unif urand_bit_sampler () ;;
+
+
 
 
 (** Distributions *)
@@ -220,23 +229,73 @@ let rec urand_rejection_sampler (maxv : CReal.t) (pdf : CReal.t -> CReal.t) =
 let quad_pdf (x : CReal.t) = CReal.mul (CReal.of_int 3) (CReal.mul x x) ;;
 
 
+(** 1D Brownian Motion *)
+type brownian_sequence = {
+  mutable hist : CReal.t list;
+} ;;
 
-let () =
-    let c = urand_rejection_sampler (CReal.of_int 3) quad_pdf () in
-    let _ = (CReal.to_string c 10) in
-    Printf.printf "%s,\n" (CReal.to_string c 10) ;; 
-    (*  *Printf.printf "%s" (show_stats ()) ;; *)
+
+let get_prec (c : CReal.t) : int =
+  match (c.cache) with
+  | Some (v, _) -> v
+  | None -> -1
+
+let get_cache_val (c : CReal.t) =
+  match (c.cache) with
+  | Some (_, v) -> v
+  | None -> Z.zero
+
+
+
+
+
+let b = ref { hist = [CReal.zero] } ;;
+
+let sim_N : int = 100 ;;
+
+
+let prt_state (i : int) (b : brownian_sequence) =
+  (*  Printf.printf "== %d ==\n" (List.length b.hist) ; *)
+  let f (c : CReal.t) =
+    ( let s = Z.to_string (get_cache_val c) in
+      let v = get_prec c in
+      Printf.printf "%d,%d,%s\n" i v s) in
+  let _ = List.map f b.hist in () ;;
+
+
+Printf.printf "iterate,quad-digits,approx\n" ;;
+
+for i = 0 to sim_N do
+  (* Generate a new sample *)
+  let d = CReal.sqrt (CReal.div CReal.one (CReal.of_int sim_N)) in
+  let bnm1 = List.nth (!b.hist) (List.length (!b.hist) - 1) in
+  let z = sample_gaussian () in
+  let bn = CReal.add bnm1 (CReal.mul z d) in
+  (* Force the last digit to have some precision *)
+  let _ = CReal.to_string bn 1 in
+  !b.hist <- List.append !b.hist [bn] ;
+  prt_state i (!b)
+done
+
+(*  let _ = CReal.to_string (List.nth !b.hist ((List.length !b.hist) - 1)) 10 ;; *)
+(*  let _ = prt_state (!b) ;; *)
+
+(*
+let blast = (List.nth !b.hist ((List.length !b.hist) - 1)) ;;
+let _ = Printf.sprintf "%d, %s" (get_prec blast) (Z.to_string (get_cache_val blast)) ;;
+*)
 
 
 
 (*
-let () =
+let v _ =
     let c = sample_gaussian () in
     let _ = (CReal.to_string c 10) in
     (*  *Printf.printf "%s,\n" (CReal.to_string c 10) ;; *)
     Printf.printf "%s" (show_stats ()) ;;
-*)
 
+v () ;;
+*)
 (*
 let rec profiler n =
   if n == 0
@@ -246,4 +305,3 @@ let rec profiler n =
 
 profiler 10000 ;;
 *)
-

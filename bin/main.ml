@@ -251,7 +251,7 @@ let get_cache_val (c : CReal.t) =
 
 let b = ref { hist = [CReal.zero] } ;;
 
-let sim_N : int = 100 ;;
+let sim_N : int = 1000 ;;
 
 
 let prt_state (i : int) (b : brownian_sequence) =
@@ -264,18 +264,21 @@ let prt_state (i : int) (b : brownian_sequence) =
 
 
 Printf.printf "iterate,quad-digits,approx\n" ;;
-
-for i = 0 to sim_N do
-  (* Generate a new sample *)
-  let d = CReal.sqrt (CReal.div CReal.one (CReal.of_int sim_N)) in
-  let bnm1 = List.nth (!b.hist) (List.length (!b.hist) - 1) in
-  let z = sample_gaussian () in
-  let bn = CReal.add bnm1 (CReal.mul z d) in
-  (* Force the last digit to have some precision *)
-  let _ = CReal.to_string bn 1 in
-  !b.hist <- List.append !b.hist [bn] ;
-  prt_state i (!b)
+for j = 0 to 10 do
+  !b.hist <- [CReal.zero] ;
+  for i = 0 to (sim_N - 1) do
+    (* Generate a new sample *)
+    let d = CReal.sqrt (CReal.div CReal.one (CReal.of_int sim_N)) in
+    let bnm1 = List.nth (!b.hist) (List.length (!b.hist) - 1) in
+    let z = sample_gaussian () in
+    let bn = CReal.add bnm1 (CReal.mul z d) in
+    !b.hist <- List.append !b.hist [bn] ;
+  done ;
+  let _ = CReal.to_string (List.nth (!b.hist) (List.length (!b.hist) - 1)) 10 in
+  prt_state j (!b)
 done
+
+
 
 (*  let _ = CReal.to_string (List.nth !b.hist ((List.length !b.hist) - 1)) 10 ;; *)
 (*  let _ = prt_state (!b) ;; *)

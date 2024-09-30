@@ -42,7 +42,7 @@ for p in t:
 
     plt.draw()
     N = len(df_p)
-    plt.savefig(f'ani/{N:05}.png', dpi=300)
+    plt.savefig(f'ani/{N:05}.png', dpi=160)
     plt.cla()
 
 # to combine:

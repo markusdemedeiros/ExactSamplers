@@ -310,7 +310,7 @@ let list_sorting_experiment (n : int) (c : out_channel) =
   done ;;
 
 
-list_sorting_experiment 20 stdout
+list_sorting_experiment 100 stdout
 
 
 

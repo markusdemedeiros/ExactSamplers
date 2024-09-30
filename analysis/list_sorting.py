@@ -6,16 +6,19 @@ import matplotlib.animation as animation
 
 df = pd.read_csv('./list_sorting_1.csv', names=['iterate','lb','ub',''])
 
+ani_folder = "ani"
+
+
 N = df['iterate'].max()
 t = list(range(1, N + 1))
 
 fig = plt.figure()
-board = plt.axes(xlim=(0, 200), ylim=(0, 100))
+board = plt.axes(xlim=(0, 100), ylim=(0, 25))
 
 for p in t:
     plt.axis('equal')
     ax = plt.gca()
-    ax.set_xlim(-0.25, 1.25)
+    ax.set_xlim(0, 1)
     ax.set_xticks(range(0, 0, 1))
     ax.xaxis.set_tick_params(length=0, width=0)
     ax.get_yaxis().set_visible(False)
@@ -34,11 +37,15 @@ for p in t:
         circle = plt.Circle((mean, 0), diff, fc='red', zorder=10)
         board.add_patch(circle)
 
-    plt.plot([0, 1], [0, 0], color='gray')
-    plt.text(0.1, 0.2, str(len(df_p)), dict(size=30))
+    plt.plot([0, 1], [0, 0], color='black', linewidth=0.25)
+    plt.text(0, 0.3, "n = {}".format(str(len(df_p))), dict(size=20))
 
     plt.draw()
-    plt.pause(0.4)
+    N = len(df_p)
+    plt.savefig(f'ani/{N:05}.png', dpi=300)
     plt.cla()
 
-plt.show()
+# to combine:
+# convert -delay 20 -loop 0 ani/*.png result.gif
+
+print("clear the {} folder!".format(ani_folder))

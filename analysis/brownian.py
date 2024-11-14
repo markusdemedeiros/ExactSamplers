@@ -30,5 +30,5 @@ xax = [float(x) / float(N) for x in range(len(data))]
 yax = [0.0 for _ in xax]
 plt.plot(xax, yax, c='black')
 
-# plt.savefig('brownian_1000.pdf')
-plt.show()
+plt.savefig('brownian_1000.pdf')
+#plt.show()
